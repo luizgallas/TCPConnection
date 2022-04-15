@@ -1,24 +1,33 @@
 const net = require('net');
+var readline = require('readline');
+
+const timeoutLimit = 30;
 
 const client = new net.Socket();
 
-const handleServerResponse = () => {
-    server.on('connection', () => {
+var reader = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+const handleCallback = () => {
+    client.write(JSON.stringify({ isPNE: true }));
+    reader.question('O semáforo está fechando, aperte qualquer tecla quando houver movimentação do dispositivo', () => {
         console.log('Atravessando');
+        const mockTimeToCross = Math.round(Math.floor(Math.random() * 50));
+        const willTimeout = mockTimeToCross > timeoutLimit;
+        const realAvailableTimeToCross = willTimeout ? timeoutLimit : mockTimeToCross;
+
         setTimeout(() => {
-            console.log('Atravessei');
-            client.write(JSON.stringify({ shouldOpen: true })); 
-        }, [1000])
+            if (willTimeout) {
+                console.log('Timeout excedido, abrindo semáforo');
+                client.write(JSON.stringify({ shouldOpen: true })); 
+            } else {
+                console.log('Atravessei');
+                client.write(JSON.stringify({ shouldOpen: true })); 
+            }
+        }, [realAvailableTimeToCross * 1000]);
     })
 }
 
-const handleCallback = () => {
-    console.log('conectou')
-    client.write(JSON.stringify({ isPNE: true })); 
-}
-
-const server = net.createServer((socket) => {
-    socket.on('data', (data) => handleClientData(data, socket));
-});
-server.listen(4002, handleServerResponse)
 client.connect(4000, '127.0.0.1', handleCallback); // Server
