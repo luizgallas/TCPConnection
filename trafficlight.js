@@ -1,5 +1,6 @@
 const net = require('net');
 
+let isOpen = true;
 const server = net.createServer((socket) => {
     socket.on('data', (data) => {
         const parsedData = JSON.parse(data);
@@ -7,6 +8,8 @@ const server = net.createServer((socket) => {
         let intervalId = null;
         let counter = 10;
         const handleTrafficLightStatus = (isOpening) => {
+            isOpen = isOpening;
+
             if (counter >= 1) {
                 isOpening 
                     ? console.log(`Semáforo abrindo em ${counter} segundos`)  
@@ -14,6 +17,7 @@ const server = net.createServer((socket) => {
                 counter--;
             } else {
                 clearInterval(intervalId);
+
                 isOpening 
                     ? console.log('Semáforo aberto')
                     : console.log('Semáforo fechado');
@@ -23,9 +27,9 @@ const server = net.createServer((socket) => {
             }
         }
         
-        if (parsedData.isPNE) {
+        if (parsedData.isPNE && isOpen) {
             intervalId = setInterval(() => handleTrafficLightStatus(false), 1000);  
-        } else if (parsedData.shouldOpen) {
+        } else if (parsedData.shouldOpen && !isOpen) {
             intervalId = setInterval(() => handleTrafficLightStatus(true), 1000);  
     }});
 });
